@@ -1,0 +1,23 @@
+replicasCount: 1
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi 
+
+appPort: 80
+
+image:
+  name: hadv83/php-app
+  tag: v3
+
+envs:
+  DB_HOST: my-db-pxc-db-pxc
+  DB_USER: root
+  DB_NAME: database
+
+endpoint: gestonline-formation.paas.ziosting.net
+
+storageSize: 5Gi 
+
+dbPassword: null

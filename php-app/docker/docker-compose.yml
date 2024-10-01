@@ -1,0 +1,21 @@
+services:
+  web: 
+    image: hadv83/php-app:v3
+    ports:
+    - 8282:80
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=secret
+      - DB_NAME=database
+  
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=database
+  
+  adminer:
+    image: adminer
+    ports:
+    - 8080:8080

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-php-app
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod 
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - gestonline-formation.paas.ziosting.net
+    secretName: gestonline-formation-tls
+  rules:
+  - host: gestonline-formation.paas.ziosting.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: php-app-svc
+            port:
+              name: http-svc

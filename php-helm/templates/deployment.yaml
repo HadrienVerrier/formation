@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.replicasCount | default 5 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Release.Name }}
+        app.kubernetes.io/component: web
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - app-php
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - web
+              topologyKey: "kubernetes.io/hostname"
+      initContainers:
+      - name: download-image
+        command: ["/bin/sh", "-c"]
+        args:
+        - wget -O /mnt/images/image.jpg https://picsum.photos/200/300
+        image: busybox
+        volumeMounts:
+        - name: volume-images
+          mountPath: /mnt/images          
+      containers:
+      - name: {{ .Release.Name }}-container
+        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          {{ if .Values.resources.limits }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          {{ end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.appPort }}
+        env:
+        {{ range $key, $value := .Values.envs }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{ end }}
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secret
+              key: db-password
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3 
+        volumeMounts:
+        - name: volume-images
+          mountPath: /app/images
+
+      volumes:
+      - name: volume-images
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-pvc

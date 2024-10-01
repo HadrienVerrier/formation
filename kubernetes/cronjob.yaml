@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: image-cron
+  labels:
+    app.kubernetes.io/name: app-php
+    app.kubernetes.io/component: image-cron
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: app-php
+            app.kubernetes.io/component: image-cron
+        spec:
+          containers:
+          - name: cronjob
+            image: busybox
+            command: ["/bin/sh", "-c"]
+            args:
+            - wget -O /mnt/images/image.jpg https://picsum.photos/200/300
+          restartPolicy: OnFailure
+

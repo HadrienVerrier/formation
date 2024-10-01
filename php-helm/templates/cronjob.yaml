@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-cron
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: image-cron
+spec:
+  schedule: {{ .Values.cron | quote }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ .Release.Name }}
+            app.kubernetes.io/component: image-cron
+        spec:
+          containers:
+          - name: cronjob
+            image: busybox
+            command: ["/bin/sh", "-c"]
+            args:
+            - wget -O /mnt/images/image.jpg https://picsum.photos/200/300
+            volumeMounts:
+            - name: images-volume
+              mountPath: /mnt/images
+          volumes:
+          - name: images-volume
+            persistentVolumeClaim:
+              claimName: {{ .Release.Name }}-pvc
+          restartPolicy: OnFailure
+
